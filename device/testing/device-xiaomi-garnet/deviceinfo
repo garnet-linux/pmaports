@@ -1,0 +1,27 @@
+# Reference: <https://postmarketos.org/deviceinfo>
+# Please use double quotes only. You can source this file in shell scripts.
+
+deviceinfo_format_version="0"
+deviceinfo_name="Xiaomi Redmi Note 13 Pro 5G"
+deviceinfo_manufacturer="Xiaomi"
+deviceinfo_codename="xiaomi-garnet"
+deviceinfo_year="2024"
+deviceinfo_arch="aarch64"
+deviceinfo_chassis="handset"
+deviceinfo_drm="true"
+
+# Kernel
+deviceinfo_dtb="qcom/sm7435-xiaomi-garnet"
+deviceinfo_kernel_cmdline="clk_ignore_unused pd_ignore_unused"
+
+# Display (simple-framebuffer set up by Mu-Silicium at 0xb8000000)
+deviceinfo_screen_width="1220"
+deviceinfo_screen_height="2712"
+
+# Storage (UFS)
+deviceinfo_rootfs_image_sector_size="4096"
+
+# Flashing
+deviceinfo_flash_method=""
+deviceinfo_flash_fastboot_partition_kernel="recovery_a"
+deviceinfo_generate_bootimg="false"

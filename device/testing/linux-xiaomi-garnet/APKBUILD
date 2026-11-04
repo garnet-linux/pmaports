@@ -1,0 +1,64 @@
+# Maintainer: ximi <ximiyadka124@proton.me>
+# Kernel: mainline-based fork with SM7435 / garnet support
+pkgname=linux-xiaomi-garnet
+pkgver=7.3.0
+pkgrel=1
+pkgdesc="Kernel fork for Xiaomi Redmi Note 13 Pro 5G (garnet)"
+_flavor="xiaomi-garnet"
+_carch="arm64"
+_commit="ccc850ebce5ff2b9d391296c6ba2d6b4072318e8"
+url="https://github.com/garnet-linux/linux"
+license="GPL-2.0-only"
+arch="aarch64"
+options="!strip !check !tracepath pmb:cross-native"
+makedepends="
+	bash bc bison findutils flex openssl-dev perl python3
+	diffutils elfutils-dev xz zstd coreutils gzip busybox-extras
+"
+source="$pkgname-$_commit.tar.gz::$url/archive/$_commit.tar.gz
+	pmos.config
+"
+builddir="$srcdir/linux-$_commit"
+
+prepare() {
+	default_prepare
+	make ARCH=$_carch defconfig
+	# defconfig enables every SoC platform: keep only Qualcomm
+	local _p
+	for _p in $(sed -n 's/^config \(ARCH_[A-Z0-9_]*\)$/\1/p' \
+			arch/$_carch/Kconfig.platforms | grep -vx ARCH_QCOM); do
+		scripts/config --disable "$_p"
+	done
+	./scripts/kconfig/merge_config.sh -m -O . .config \
+		arch/$_carch/configs/garnet.config "$srcdir"/pmos.config
+	make ARCH=$_carch olddefconfig
+	make -s ARCH=$_carch kernelrelease > "$builddir"/kernel.release
+}
+
+build() {
+	unset LDFLAGS
+	make ARCH=$_carch CC="${CC:-gcc}" \
+		KBUILD_BUILD_VERSION="$((pkgrel + 1))-postmarketOS" \
+		Image Image.gz modules qcom/sm7435-xiaomi-garnet.dtb
+}
+
+package() {
+	local kver
+	kver="$(cat "$builddir"/kernel.release)"
+
+	install -Dm644 arch/$_carch/boot/Image.gz "$pkgdir"/boot/vmlinuz
+	install -Dm644 arch/$_carch/boot/dts/qcom/sm7435-xiaomi-garnet.dtb \
+		"$pkgdir"/boot/dtbs/qcom/sm7435-xiaomi-garnet.dtb
+
+	make ARCH=$_carch modules_install \
+		INSTALL_MOD_PATH="$pkgdir" INSTALL_MOD_STRIP=1
+	rm -f "$pkgdir"/lib/modules/"$kver"/build
+
+	install -Dm644 "$builddir"/kernel.release \
+		"$pkgdir"/usr/share/kernel/$_flavor/kernel.release
+}
+
+sha512sums="
+fdfbf1b93fa01329b19c18506dc0a5b421de12e6f75cc0baef0b1d58e4c85a8b693e0da57d39671ca6a9e646c0cca0cc43795be9bdc496498b2916de7b1c1b60  linux-xiaomi-garnet-ccc850ebce5ff2b9d391296c6ba2d6b4072318e8.tar.gz
+f1abc81703f3add91d851346b13fcdcc8089279501dce9397b1b35ebfe16eddedbaee67a27d7704bc61b6137c5d29ad9b93742ca4aaa6d3990ef1a493f77d2de  pmos.config
+"

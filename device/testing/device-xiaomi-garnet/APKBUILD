@@ -1,0 +1,49 @@
+# Reference: <https://postmarketos.org/devicepkg>
+# Maintainer: ximi <ximiyadka124@proton.me>
+pkgname=device-xiaomi-garnet
+pkgdesc="Xiaomi Redmi Note 13 Pro 5G"
+pkgver=0.1
+pkgrel=0
+url="https://postmarketos.org"
+license="MIT"
+arch="aarch64"
+options="!check !archcheck"
+depends="
+	linux-xiaomi-garnet
+	postmarketos-base
+"
+makedepends="devicepkg-dev grub grub-efi"
+source="deviceinfo"
+
+build() {
+	devicepkg_build $startdir $pkgname
+
+	# standalone GRUB: find the pmOS_boot ESP and load its grub.cfg
+	cd "$srcdir"
+	cat > early.cfg <<'EOF'
+search --no-floppy --label pmOS_boot --set=root
+configfile ($root)/grub/grub.cfg
+EOF
+	grub-mkstandalone -O arm64-efi -o BOOTAA64.EFI \
+		--modules="part_gpt fat search search_label configfile" \
+		"boot/grub/grub.cfg=early.cfg"
+}
+
+package() {
+	devicepkg_package $startdir $pkgname
+
+	install -Dm644 "$srcdir"/BOOTAA64.EFI \
+		"$pkgdir"/boot/EFI/BOOT/BOOTAA64.EFI
+	mkdir -p "$pkgdir"/boot/grub
+	cat > "$pkgdir"/boot/grub/grub.cfg <<EOF
+set timeout=0
+devicetree /dtbs/qcom/sm7435-xiaomi-garnet.dtb
+linux /vmlinuz console=tty0 ignore_loglevel loglevel=8 clk_ignore_unused pd_ignore_unused panic=10 rdinit=/init
+initrd /initramfs
+boot
+EOF
+}
+
+sha512sums="
+e38b57b18391e324eb5cf1eb6690370c117b4cebdb1804f224ab6181a0dd3485fe639cd0d7c4befff71b38cfee2b2013474650957c1132f8a5de35aa891d12b9  deviceinfo
+"
