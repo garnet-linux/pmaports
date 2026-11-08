@@ -3,13 +3,16 @@
 pkgname=device-xiaomi-garnet
 pkgdesc="Xiaomi Redmi Note 13 Pro 5G"
 pkgver=0.1
-pkgrel=0
+pkgrel=3
 url="https://postmarketos.org"
 license="MIT"
 arch="aarch64"
 options="!check !archcheck"
 depends="
 	linux-xiaomi-garnet
+	firmware-xiaomi-garnet
+	linux-firmware-ath10k
+	tqftpserv
 	postmarketos-base
 "
 makedepends="devicepkg-dev grub grub-efi"

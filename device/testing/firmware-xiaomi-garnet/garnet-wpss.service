@@ -1,0 +1,12 @@
+[Unit]
+Description=Start WPSS remoteproc (Wi-Fi)
+After=local-fs.target tqftpserv.service
+Wants=tqftpserv.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/garnet-wpss-start
+
+[Install]
+WantedBy=multi-user.target

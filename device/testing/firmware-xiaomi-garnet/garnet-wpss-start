@@ -1,0 +1,26 @@
+#!/bin/sh
+# Start the WPSS remoteproc so ath10k_snoc can bring up wlan0.
+# tqftpserv must already be running (WPSS fetches wlanmdsp.mbn over QRTR).
+MDT=/lib/firmware/qcom/sm7435/garnet/wpss.mdt
+[ -f "$MDT" ] || { echo "garnet-wpss-start: $MDT missing" >&2; exit 1; }
+
+R=
+i=0
+while [ -z "$R" ] && [ $i -lt 15 ]; do
+	for d in /sys/class/remoteproc/*; do
+		[ -e "$d/name" ] && [ "$(cat "$d/name")" = wpss ] && R=$d && break
+	done
+	[ -n "$R" ] || { i=$((i + 1)); sleep 1; }
+done
+[ -n "$R" ] || { echo "garnet-wpss-start: wpss remoteproc not found" >&2; exit 1; }
+
+[ "$(cat "$R/state")" = running ] && exit 0
+echo start > "$R/state" || { echo "garnet-wpss-start: start failed" >&2; exit 1; }
+
+i=0
+while [ $i -lt 10 ]; do
+	[ "$(cat "$R/state")" = running ] && exit 0
+	i=$((i + 1)); sleep 1
+done
+echo "garnet-wpss-start: wpss did not reach running" >&2
+exit 1

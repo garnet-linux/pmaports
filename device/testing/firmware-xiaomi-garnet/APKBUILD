@@ -1,0 +1,87 @@
+# Maintainer: Ximi <ximiyadka124@proton.me>
+pkgname=firmware-xiaomi-garnet
+pkgver=1
+pkgrel=1
+pkgdesc="Firmware and WPSS launcher for Xiaomi Redmi Note 13 Pro 5G"
+url="https://github.com/garnet-linux"
+arch="aarch64"
+license="proprietary"
+depends="linux-firmware-ath10k tqftpserv"
+options="!check !strip !tracedepth !archcheck !spdx"
+subpackages="$pkgname-openrc $pkgname-systemd"
+source="
+	wpss.mdt
+	wpss.b00
+	wpss.b01
+	wpss.b02
+	wpss.b03
+	wpss.b04
+	wpss.b05
+	wpss.b06
+	wpss.b07
+	wpss.b08
+	wpss.b10
+	firmware-5.bin
+	board-2.bin
+	wlanmdsp.mbn
+	garnet-wpss-start
+	garnet-wpss.initd
+	garnet-wpss.service
+"
+
+build() {
+	return 0
+}
+
+package() {
+	local wpss="$pkgdir"/lib/firmware/qcom/sm7435/garnet
+	local ath="$pkgdir"/lib/firmware/ath10k/WCN3990/hw1.0
+
+	install -Dm644 -t "$wpss" "$srcdir"/wpss.mdt "$srcdir"/wpss.b*
+	install -Dm644 "$srcdir"/wlanmdsp.mbn "$wpss"/wlanmdsp.mbn
+	install -Dm644 "$srcdir"/wlanmdsp.mbn "$pkgdir"/lib/firmware/wlanmdsp.mbn
+	install -Dm644 -t "$ath" "$srcdir"/firmware-5.bin "$srcdir"/board-2.bin
+	install -Dm755 "$srcdir"/garnet-wpss-start "$pkgdir"/usr/bin/garnet-wpss-start
+}
+
+openrc() {
+	pkgdesc="$pkgdesc (OpenRC init script)"
+	install_if="$pkgname=$pkgver-r$pkgrel openrc"
+	depends="tqftpserv-openrc"
+
+	install -Dm755 "$srcdir"/garnet-wpss.initd "$subpkgdir"/etc/init.d/garnet-wpss
+	mkdir -p "$subpkgdir"/etc/runlevels/default
+	ln -s /etc/init.d/garnet-wpss "$subpkgdir"/etc/runlevels/default/garnet-wpss
+}
+
+systemd() {
+	pkgdesc="$pkgdesc (systemd unit)"
+	install_if="$pkgname=$pkgver-r$pkgrel systemd"
+	depends="tqftpserv-systemd"
+
+	install -Dm644 "$srcdir"/garnet-wpss.service \
+		"$subpkgdir"/usr/lib/systemd/system/garnet-wpss.service
+	mkdir -p "$subpkgdir"/usr/lib/systemd/system/multi-user.target.wants
+	ln -s ../garnet-wpss.service \
+		"$subpkgdir"/usr/lib/systemd/system/multi-user.target.wants/garnet-wpss.service
+}
+
+sha512sums="
+1f391f704cda406e76d749d0cf583cb6baeb379f6feaa2e07fec396798cea5224fa720a3f142d9ea0020bf48c50004db4c5baf94562a8392de66c669c00cc596  wpss.mdt
+9888f0fdb8c5c825cc26a5ade996c64359f678f41dc7185c0aa4f788f13b8ad1c3cde20d81a6cca2d19034177b75734720122de88c9ab242f1ff65a9e34efb2d  wpss.b00
+9d4fb3039471fde3842ff81e38b3bab3e08539a75c36b4415d9068d10446054daa748be5a0a89b7df95d43b42e8168af87fe3e8eced387e33e3e54a34cb04775  wpss.b01
+bcbd77c0831f1cdcbfeb60fd8fd47b53c88be23bc49625a935a011086e901fba6d4f4dead6f1255a9659e28ecc80dcf81ca0836c42d4d5f1e33a030fc32d3cdc  wpss.b02
+9836f9199def842c1d5e991940d78951a3b608b330942cb001c15eb8ef3da907637ac9a5f093d741472dc93561b5b773f8e2216da3884a16795202fe805f2bc9  wpss.b03
+f271b31e7d9240f1f944c873aac22c1e4b2587a76cca944029f37c50d5c1b8ea17be712144f240ee0d1fbfe1f08f40764c6a3a749f82c0915007f35b39612d97  wpss.b04
+b923d682ebef1e7b68d4c6b3984bf5ba7bd7e5c9ecd8c9d31fcc3bad8800f3553bab996e190f6639cf9f5f62796909b01fe3c921fa538032452d30d3f779d183  wpss.b05
+0454d991f789fa3cd8e37a284f21aa85174072327939bbf6c1b9a62186af95923d2cf0c0f0e6658b8da92119397bd75eb8c341671a2cdc4c20baee8ff5e82a41  wpss.b06
+9d7ea3156ca388c2182bc1e1cbd87b57cb803fa9da08da1a44b0fb00fae31479305611ba99e810ed48421289dbc1fddac4d2cb8ba5574b4cdb17b8c1804231c3  wpss.b07
+f846b159fd6b9d47b065032f9fe2ab7509007253bf7c169d13dba3b63b4b9ad984bc3d706f0260990358ffce39f1972bb1248d645b328bba5a5b988e19cdfc33  wpss.b08
+e6ee0310a4786fcac9becff621e13d25d0fb0ea64db90246e220080778e33223836cd816e2995dad0a4f3345b3c324804406ab03b31aa0e92a716a09f9468427  wpss.b10
+7dce040ac3e1452be43dea64ba2cf7b2b3703371d233c28e9ed768b55fa012dd78104208fcb5e4eccf17cece289d9a09bc0f92227766b40eb99fc5921caa547c  firmware-5.bin
+dae2fcc8844cc01d93fc9c28f70d5fe3a49fd8e21e5fa10b65e29dfc05f1d9e684155b32d48e14fdd8bd71e90d83c8eb0ef7acf28f0b386a259bb8c646f5a490  board-2.bin
+15538bfe95a00979c7cf23fe9f014afd31f9b82224e3057cebe46fb50863ce3cb7b4bc7359acd55cd40385352452e78c4a761cb2ba15f9ee6078778a6c7a0b64  wlanmdsp.mbn
+11afd809d636244eeff19fd9956ea7abc2eca3f48f4284ba88f3d78d5328fb8993c2df25b38afb8a3964e7b49b6c74ccaf0f4cb3a608ea79919b5793697de08f  garnet-wpss-start
+76fff0e9c850ea0cdb0e2e4762a8ac31bb50e3224d0e01a4c12577598a94f7c29c59cf801c9bc05c054c89a2fc2d35bb56801e2c3589be31dc3cc694627c7696  garnet-wpss.initd
+d98a07b70924e6f6464e4674309ec6c7014a075d32b2d9dcd15c78a1adc848f5010357bc7349eecf1f1a3c1d03d9b917045450a72bc08904cb354dc3b714d9cb  garnet-wpss.service
+"

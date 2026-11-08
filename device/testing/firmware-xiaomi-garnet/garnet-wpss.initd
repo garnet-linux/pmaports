@@ -1,0 +1,12 @@
+#!/sbin/openrc-run
+description="Start WPSS remoteproc (Wi-Fi)"
+
+depend() {
+	need localmount tqftpserv
+}
+
+start() {
+	ebegin "Starting WPSS"
+	/usr/bin/garnet-wpss-start
+	eend $?
+}
