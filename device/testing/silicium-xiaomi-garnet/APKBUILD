@@ -1,0 +1,75 @@
+# Maintainer: ximi <ximiyadka124@proton.me>
+# UEFI firmware (Project Silicium / Mu-Silicium) for Xiaomi Redmi Note 13 Pro 5G
+pkgname=silicium-xiaomi-garnet
+pkgver=0_git20261106
+pkgrel=0
+pkgdesc="Mu-Silicium UEFI boot image for Xiaomi Redmi Note 13 Pro 5G (garnet)"
+url="https://github.com/Project-Silicium/Mu-Silicium"
+license="BSD-2-Clause-Patent"
+arch="aarch64"
+_commit="8471e47f5248ebbffc2e6196b683204163efe155"
+_device="garnet"
+# net:      build() clones git submodules and installs pip packages
+# !strip:   the output is a firmware/boot image, not an ELF
+# !tracedeps/!check/!archcheck: nothing to scan or test
+options="net !strip !check !archcheck !tracedeps !spdx"
+makedepends="
+	bash
+	build-base
+	clang
+	curl
+	gettext
+	git
+	lld
+	llvm
+	make
+	mono
+	nasm
+	python3
+	python3-dev
+	py3-pip
+	py3-virtualenv
+	util-linux-dev
+"
+builddir="$srcdir/Mu-Silicium"
+# Final image lives in /usr/share (not /boot): it is flashed by hand with
+# fastboot and must survive pmbootstrap's /boot regeneration.
+_dest="/usr/share/$pkgname"
+
+fetch() {
+	# no tarball: GitHub archives do not contain the git submodules
+	mkdir -p "$builddir"
+	cd "$builddir"
+	git init -q .
+	git remote add origin "$url.git"
+	git fetch -q --depth 1 origin "$_commit"
+	git checkout -q FETCH_HEAD
+	git submodule update --init --recursive --depth 1
+}
+
+prepare() {
+	[ -d "$builddir/.git" ] || fetch
+	cd "$builddir"
+	python3 -m venv "$srcdir"/venv
+	"$srcdir"/venv/bin/pip install --no-cache-dir -r pip-requirements.txt
+}
+
+build() {
+	cd "$builddir"
+	export PATH="$srcdir/venv/bin:$PATH"
+	export CLANGPDB_AARCH64_PREFIX="aarch64-alpine-linux-musl-"
+	# same as: python build_uefi.py -d garnet
+	python3 build_uefi.py -d $_device
+
+	# fail loudly instead of packaging an empty/missing image
+	[ -s "Mu-$_device.img" ] || { echo "Mu-$_device.img was not produced" >&2; return 1; }
+}
+
+package() {
+	# copy straight from builddir into pkgdir so the image is not lost
+	# when abuild cleans $srcdir
+	install -Dm644 "$builddir/Mu-$_device.img" \
+		"$pkgdir$_dest/Mu-$_device.img"
+}
+
+sha512sums=""

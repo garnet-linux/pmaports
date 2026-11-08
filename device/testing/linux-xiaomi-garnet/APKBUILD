@@ -6,7 +6,7 @@ pkgrel=1
 pkgdesc="Kernel fork for Xiaomi Redmi Note 13 Pro 5G (garnet)"
 _flavor="xiaomi-garnet"
 _carch="arm64"
-_commit="ccc850ebce5ff2b9d391296c6ba2d6b4072318e8"
+_commit="51b19bb1af6da49021e999fa175346e9b185c1ec"
 url="https://github.com/garnet-linux/linux"
 license="GPL-2.0-only"
 arch="aarch64"
@@ -39,14 +39,14 @@ build() {
 	unset LDFLAGS
 	make ARCH=$_carch CC="${CC:-gcc}" \
 		KBUILD_BUILD_VERSION="$((pkgrel + 1))-postmarketOS" \
-		Image Image.gz modules qcom/sm7435-xiaomi-garnet.dtb
+		Image modules qcom/sm7435-xiaomi-garnet.dtb
 }
 
 package() {
 	local kver
 	kver="$(cat "$builddir"/kernel.release)"
 
-	install -Dm644 arch/$_carch/boot/Image.gz "$pkgdir"/boot/vmlinuz
+	install -Dm644 arch/$_carch/boot/Image "$pkgdir"/boot/vmlinuz
 	install -Dm644 arch/$_carch/boot/dts/qcom/sm7435-xiaomi-garnet.dtb \
 		"$pkgdir"/boot/dtbs/qcom/sm7435-xiaomi-garnet.dtb
 
@@ -59,6 +59,6 @@ package() {
 }
 
 sha512sums="
-fdfbf1b93fa01329b19c18506dc0a5b421de12e6f75cc0baef0b1d58e4c85a8b693e0da57d39671ca6a9e646c0cca0cc43795be9bdc496498b2916de7b1c1b60  linux-xiaomi-garnet-ccc850ebce5ff2b9d391296c6ba2d6b4072318e8.tar.gz
+9614fca5c75ee5754e5fa58106a6e7ea1814a93e541f6186695a2779585a95fb2b2ed6a6a57061555a92601b02c2b7aa1018f9e9091f6bce460d439c2a90abcd  linux-xiaomi-garnet-51b19bb1af6da49021e999fa175346e9b185c1ec.tar.gz
 f1abc81703f3add91d851346b13fcdcc8089279501dce9397b1b35ebfe16eddedbaee67a27d7704bc61b6137c5d29ad9b93742ca4aaa6d3990ef1a493f77d2de  pmos.config
 "
